@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>השורד האחרון - ניסוי בכיתה</title>
+    <title>השורד האחרון - ניסוי חי בכיתה</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
         @theme {
             --color-island-dark: #0c0a09;
@@ -13,19 +15,18 @@
         }
     </style>
 </head>
-<body class="bg-island-dark text-stone-100 min-height-screen flex flex-col justify-center items-center p-4 selection:bg-amber-500 selection:text-black">
+<body class="bg-island-dark text-stone-100 min-h-screen flex flex-col justify-center items-center p-4 selection:bg-amber-500 selection:text-black">
 
-    <div id="role-selection" class="w-full max-w-md bg-stone-900/95 border-2 border-island-accent rounded-2xl p-8 text-center shadow-2xl backdrop-blur-sm">
+    <div id="role-selection" class="w-full max-w-md bg-stone-900/95 border-2 border-island-accent rounded-2xl p-8 text-center shadow-2xl">
         <h1 class="text-4xl font-black text-amber-500 mb-2 tracking-wide">השורד האחרון</h1>
         <p class="text-stone-400 text-sm mb-8 font-medium">ניסוי מתח מול מוטיבציה בכיתה</p>
         
         <div class="space-y-4">
-            <button onclick="initScreen('projector')" class="w-full bg-gradient-to-r from-amber-600 to-island-accent hover:from-amber-500 hover:to-amber-600 text-white font-bold py-4 px-6 rounded-xl transition duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-3 text-lg cursor-pointer">
-                <span>🔥</span> מסך מקרן (מועצת השבט)
+            <button onclick="initScreen('projector')" class="w-full bg-gradient-to-r from-amber-600 to-island-accent hover:from-amber-500 hover:to-amber-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg text-lg cursor-pointer">
+                🔥 מסך מקרן (מועצת השבט)
             </button>
-            
-            <button onclick="initScreen('player')" class="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold py-4 px-6 rounded-xl transition duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-3 text-lg cursor-pointer">
-                <span>🌴</span> מסך שחקן (השורד באי)
+            <button onclick="initScreen('player')" class="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg text-lg cursor-pointer">
+                🌴 מסך שחקן (השורד באי)
             </button>
         </div>
     </div>
@@ -33,23 +34,18 @@
     <div id="projector-view" class="hidden w-full max-w-5xl bg-stone-900/95 border-2 border-island-accent rounded-2xl p-6 shadow-2xl">
         <div class="flex flex-col md:flex-row justify-between items-center border-b border-stone-800 pb-4 mb-6 gap-4">
             <div>
-                <h1 class="text-2xl font-black text-amber-500 flex items-center gap-2">🔥 מועצת השבט <span class="text-sm font-normal text-stone-400">(מסך מרצה)</span></h1>
-                <p class="text-stone-400 text-xs mt-1">רשימת השורדים והסטטוס שלהם בזמן אמת</p>
+                <h1 class="text-2xl font-black text-amber-500">🔥 מועצת השבט (לוח מנחה)</h1>
+                <p class="text-stone-400 text-xs mt-1">הסטודנטים מתחברים כעת מהניידים שלהם בזמן אמת</p>
             </div>
             <div class="flex items-center gap-6 bg-stone-950 px-6 py-3 rounded-xl border border-stone-800 shadow-inner">
                 <div class="text-center">
-                    <span class="text-xs text-stone-500 block uppercase font-bold tracking-wider">יום באי</span>
+                    <span class="text-xs text-stone-500 block uppercase font-bold">יום באי</span>
                     <span id="proj-round" class="text-2xl font-black text-amber-500">1</span><span class="text-stone-600 font-bold">/8</span>
-                </div>
-                <div class="w-px h-8 bg-stone-800"></div>
-                <div class="text-center">
-                    <span class="text-xs text-stone-500 block uppercase font-bold tracking-wider">זמן לסיבוב</span>
-                    <span id="proj-timer" class="text-2xl font-mono font-bold text-red-500">03:00</span>
                 </div>
             </div>
         </div>
 
-        <div class="overflow-x-auto rounded-xl border border-stone-800 bg-stone-950/50 shadow-inner">
+        <div class="overflow-x-auto rounded-xl border border-stone-800 bg-stone-950/50">
             <table class="w-full text-right border-collapse">
                 <thead>
                     <tr class="bg-stone-900/80 text-amber-500 border-b border-stone-800">
@@ -60,14 +56,15 @@
                     </tr>
                 </thead>
                 <tbody id="players-table-body" class="divide-y divide-stone-900">
-                    </tbody>
+                    <tr><td colspan="4" class="p-8 text-center text-stone-600 italic text-sm">ממתין לשורדים שיתחברו מהטלפונים...</td></tr>
+                </tbody>
             </table>
         </div>
 
         <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-stone-900/40 p-4 rounded-xl border border-stone-800/60">
-            <div class="text-xs text-stone-500 font-medium">המערכת מנהלת את חישוב הסתברויות המעטפות (30%) והתוצאות (50/50) אוטומטית.</div>
-            <button onclick="nextRound()" class="bg-amber-600 hover:bg-amber-500 text-stone-950 font-black px-6 py-3 rounded-xl shadow-lg shadow-amber-900/20 transition duration-150 transform active:scale-95 flex items-center gap-2 cursor-pointer text-sm">
-                העבר יום באי (-1 אספקה) 🗓️
+            <button onclick="resetGame()" class="bg-stone-800 hover:bg-stone-700 text-stone-400 text-xs px-4 py-2 rounded-lg cursor-pointer">אתחל ניסוי מחדש 🔄</button>
+            <button onclick="nextRound()" class="bg-amber-600 hover:bg-amber-500 text-stone-950 font-black px-6 py-3 rounded-xl shadow-lg transition duration-150 transform active:scale-95 cursor-pointer text-sm">
+                העבר יום באי (-1 אספקה לכולם) 🗓️
             </button>
         </div>
     </div>
@@ -76,11 +73,11 @@
         <div id="player-join" class="space-y-6 py-4">
             <div class="space-y-2">
                 <h2 class="text-2xl font-black text-emerald-400">הנחיתה על האי</h2>
-                <p class="text-stone-400 text-xs">הזן את שמך כדי להצטרף לניסוי השורדים</p>
+                <p class="text-stone-400 text-xs">הזן שם מלא כדי להצטרף ללוח המקרן</p>
             </div>
             <div class="space-y-4">
-                <input type="text" id="player-name-input" class="w-full bg-stone-950 border border-stone-700 rounded-xl px-4 py-3 text-center text-lg font-bold text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-inner" placeholder="הקלד את שמך כאן..." autocomplete="off">
-                <button onclick="joinGame()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                <input type="text" id="player-name-input" class="w-full bg-stone-950 border border-stone-700 rounded-xl px-4 py-3 text-center text-lg font-bold text-white focus:outline-none focus:border-emerald-500 shadow-inner" placeholder="הקלד את שמך כאן...">
+                <button onclick="joinGame()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg cursor-pointer">
                     עלה על הסירה ⛵
                 </button>
             </div>
@@ -88,35 +85,34 @@
 
         <div id="player-game" class="hidden space-y-6">
             <div class="flex justify-between items-center bg-stone-950 px-4 py-2.5 rounded-xl border border-stone-800 shadow-inner">
-                <span id="player-display-name" class="font-bold text-amber-500 text-sm tracking-wide">שורד</span>
-                <span class="text-xs font-semibold text-stone-500 bg-stone-900 px-2.5 py-1 rounded-md border border-stone-800/80">יום <strong id="play-round" class="text-stone-300">1</strong>/8</span>
+                <span id="player-display-name" class="font-bold text-amber-500 text-sm">שורד</span>
+                <span class="text-xs font-semibold text-stone-500 bg-stone-900 px-2.5 py-1 rounded-md">יום <strong id="play-round" class="text-stone-300">1</strong>/8</span>
             </div>
 
             <div class="bg-stone-950/40 border border-stone-800/60 rounded-2xl p-6 shadow-inner relative overflow-hidden">
-                <div class="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500" id="hp-bar" style="width: 100%"></div>
-                <span class="text-xs text-stone-500 block font-bold tracking-wider mb-1 uppercase">מד אספקה ומים נותר</span>
-                <div id="player-hp" class="text-7xl font-black text-emerald-400 my-2 drop-shadow-[0_0_15px_rgba(16,185,129,0.2)]">10</div>
+                <span class="text-xs text-stone-500 block font-bold tracking-wider mb-1">מד אספקה ומים נותר</span>
+                <div id="player-hp" class="text-7xl font-black text-emerald-400 my-2">10</div>
                 <p class="text-stone-400 text-xs font-medium" id="hp-status-text">מצב האספקה יציב ותקין</p>
             </div>
 
-            <div id="envelope-container" class="bg-stone-950 border-2 border-dashed border-stone-800 rounded-2xl p-6 min-h-[190px] flex flex-col justify-center items-center transition-all duration-300">
+            <div id="envelope-container" class="bg-stone-950 border-2 border-dashed border-stone-800 rounded-2xl p-6 min-h-[190px] flex flex-col justify-center items-center">
                 <div id="envelope-waiting" class="space-y-2">
-                    <div class="text-3xl opacity-30 select-none">🌊</div>
+                    <div class="text-3xl opacity-30">🌊</div>
                     <p class="text-stone-500 text-sm font-medium">האי שקט כרגע...</p>
-                    <p class="text-stone-600 text-xxs max-w-[250px] mx-auto">לא מצאת דבר בחוף הים בסיבוב הזה. המתן בסבלנות לעדכון ממועצת השבט.</p>
+                    <p class="text-stone-600 class='text-xs'">לא מצאת דבר בחוף הים בסיבוב הזה. המתן לעדכון מהמרצה במקרן.</p>
                 </div>
 
                 <div id="envelope-active" class="hidden space-y-4 w-full">
                     <div class="text-4xl animate-bounce">📜</div>
                     <div>
                         <h3 class="text-amber-500 font-black text-lg">נמצאה הודעה בבקבוק!</h3>
-                        <p class="text-stone-400 text-xs mt-0.5">הזדמנות לקחת סיכון: <strong class="text-emerald-400">50% ל-+3</strong> או <strong class="text-red-400">50% ל--3</strong></p>
+                        <p class="text-stone-400 text-xs mt-0.5">לקחת סיכון? 50% לקבל <strong class="text-emerald-400">+3</strong> או 50% להפסיד <strong class="text-red-400">-3</strong></p>
                     </div>
                     <div class="pt-2 space-y-2">
-                        <button onclick="handleEnvelopeDecision(true)" class="w-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-black py-3 px-4 rounded-xl text-sm transition shadow-lg cursor-pointer">
+                        <button onclick="handleEnvelopeDecision(true)" class="w-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-black py-3 px-4 rounded-xl text-sm shadow-lg cursor-pointer">
                             פתח את ההודעה וקח את הסיכון
                         </button>
-                        <button onclick="handleEnvelopeDecision(false)" class="w-full bg-stone-900 hover:bg-stone-800 text-stone-400 font-bold py-2 px-4 rounded-xl text-xs transition border border-stone-800 cursor-pointer">
+                        <button onclick="handleEnvelopeDecision(false)" class="w-full bg-stone-900 hover:bg-stone-800 text-stone-400 font-bold py-2 px-4 rounded-xl text-xs border border-stone-800 cursor-pointer">
                             ותר על ההזדמנות (הישאר בטוח)
                         </button>
                     </div>
@@ -125,281 +121,178 @@
                 <div id="envelope-resolved" class="hidden space-y-2">
                     <div id="resolved-icon" class="text-3xl">🔒</div>
                     <p id="resolved-text" class="text-sm font-bold text-stone-400">החלטתך ננעלה בהצלחה</p>
-                    <p class="text-stone-600 text-xxs">התוצאה שודרה למקרן. המתן למנחה שיעביר יום.</p>
+                    <p class="text-stone-600 text-xs">התוצאה עודכנה במקרן הראשי. המתן למעבר הסיבוב.</p>
                 </div>
             </div>
 
             <div id="player-dead" class="hidden bg-red-950/40 border-2 border-red-900 rounded-2xl p-6 space-y-3">
                 <div class="text-4xl">💀</div>
                 <h3 class="text-red-500 font-black text-xl">האש שלך כבתה!</h3>
-                <p class="text-stone-400 text-sm leading-relaxed">נקודות האספקה שלך הגיעו ל-0. הודחת מהאי ועברת למעמד של "מושבע" – השתתף בדיון בכיתה.</p>
+                <p class="text-stone-400 text-sm leading-relaxed">האספקה אזלה והודחת. עברת למעמד משקיף בניסוי.</p>
             </div>
         </div>
     </div>
 
     <script>
-        function playSound(type) {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (type === 'success') {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
-                    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.35);
-                } else if (type === 'fail') {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
-                    osc.frequency.setValueAtTime(146.83, audioCtx.currentTime + 0.15); // D3
-                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.4);
-                } else if (type === 'click') {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-                }
-            } catch(e) { console.log('Audio error:', e); }
-        }
-    </script>
+        // חיבור קשיח לענן פיירבייס ייעודי לניסוי
+        const firebaseConfig = {
+            databaseURL: "https://survivor-class-default-rtdb.europe-west1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    <script>
         let currentRole = '';
         let myName = '';
         let myHp = 10;
         let currentRound = 1;
-        let timerInterval = null;
 
-        // אתחול ואפליקציית זיכרון גלובלית משותפת בדפדפן
-        const DB_KEY = 'survivor_game_state_v1';
-        function getGlobalState() {
-            const data = localStorage.getItem(DB_KEY);
-            return data ? JSON.parse(data) : { round: 1, players: {} };
-        }
-        function saveGlobalState(state) {
-            localStorage.setItem(DB_KEY, JSON.stringify(state));
-        }
-
-        // בחירת תפקיד ראשונית
         function initScreen(role) {
-            playSound('click');
             currentRole = role;
             document.getElementById('role-selection').classList.add('hidden');
             
             if (role === 'projector') {
                 document.getElementById('projector-view').classList.remove('hidden');
-                // איפוס משחק חדש לגמרי כשמפעילים את המקרן
-                saveGlobalState({ round: 1, players: {} });
-                startTimer(180);
-                startProjectorSync();
+                listenToProjectorSync();
             } else {
                 document.getElementById('player-view').classList.remove('hidden');
-                startPlayerSyncLoop();
             }
         }
 
-        // ========================== לוגיקת מקרן (מרצה) ==========================
-        function startTimer(seconds) {
-            clearInterval(timerInterval);
-            let remaining = seconds;
-            const timerEl = document.getElementById('proj-timer');
-            
-            timerInterval = setInterval(() => {
-                remaining--;
-                let mins = Math.floor(remaining / 60);
-                let secs = remaining % 60;
-                timerEl.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        // ========================== מקרן (מרצה) ==========================
+        function listenToProjectorSync() {
+            db.ref('game').on('value', (snapshot) => {
+                const data = snapshot.val() || { round: 1, players: {} };
+                currentRound = data.round;
+                document.getElementById('proj-round').innerText = currentRound;
                 
-                if (remaining <= 0) {
-                    clearInterval(timerInterval);
-                    timerEl.innerText = "⏳ תם הזמן!";
+                const tbody = document.getElementById('players-table-body');
+                tbody.innerHTML = '';
+
+                const playersArray = Object.values(data.players || {});
+                if (playersArray.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-stone-600 italic text-sm">ממתין לשורדים שיתחברו מהטלפונים...</td></tr>`;
+                    return;
                 }
-            }, 1000);
-        }
 
-        function nextRound() {
-            playSound('click');
-            const state = getGlobalState();
-            if (state.round >= 8) {
-                alert('הניסוי הושלם! הגעתם לסוף היום ה-8.');
-                return;
-            }
-
-            state.round += 1;
-            
-            // עדכון חיוניות אוטומטי לכל השחקנים: -1 נקודה על מעבר יום
-            for (let pName in state.players) {
-                let p = state.players[pName];
-                if (p.hp > 0) {
-                    p.hp -= 1;
-                    if (p.hp < 0) p.hp = 0;
+                playersArray.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.className = p.hp <= 0 ? 'bg-red-950/10 opacity-40' : 'hover:bg-stone-900/40 transition';
                     
-                    // הגרלת מעטפה לסיבוב הבא: 30% סיכוי קשיח
-                    p.hasEnvelope = Math.random() < 0.3;
-                    p.decision = 'pending'; // איפוס החלטה לסיבוב החדש
-                }
-            }
+                    let vitality = p.hp <= 0 ? '💀 מודח' : p.hp <= 3 ? '🚨 קריטי' : p.hp <= 6 ? '⚠️ בינוני' : '💚 יציב';
+                    let decisionText = '⏳ חושב...';
+                    let decisionClass = 'text-stone-500 font-medium';
 
-            saveGlobalState(state);
-            document.getElementById('proj-round').innerText = state.round;
-            startTimer(180);
-            renderProjectorTable();
-        }
+                    if (p.hp <= 0) { decisionText = '—'; decisionClass = 'text-stone-700'; }
+                    else if (!p.hasEnvelope && p.decision === 'pending') { decisionText = '🌴 הישרדות פסיבית'; decisionClass = 'text-stone-400 text-xs'; }
+                    else if (p.decision === 'passed') { decisionText = '🛡️ בחר לא לגעת'; decisionClass = 'text-teal-500 font-semibold'; }
+                    else if (p.decision === 'opened_win') { decisionText = '📜 פתח וזכה! (+3)'; decisionClass = 'text-emerald-500 font-bold'; }
+                    else if (p.decision === 'opened_lose') { decisionText = '📜 פתח והפסיד! (-3)'; decisionClass = 'text-rose-500 font-bold'; }
 
-        function startProjectorSync() {
-            // רענון טבלה מהיר מאוד במקרן כדי לראות סטודנטים נרשמים ומחליטים בלייב
-            setInterval(() => {
-                if (currentRole === 'projector') {
-                    renderProjectorTable();
-                }
-            }, 800);
-        }
-
-        function renderProjectorTable() {
-            const state = getGlobalState();
-            document.getElementById('proj-round').innerText = state.round;
-            const tbody = document.getElementById('players-table-body');
-            tbody.innerHTML = '';
-
-            const playersArray = Object.values(state.players);
-            if (playersArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-stone-600 italic text-sm">ממתין לשורדים שיתחברו לניסוי...</td></tr>`;
-                return;
-            }
-
-            playersArray.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.className = p.hp <= 0 ? 'bg-red-950/10 opacity-40' : 'hover:bg-stone-900/40 transition';
-                
-                // חישוב מדד חיוניות טקסטואלי
-                let vitality = '💚 יציב';
-                if (p.hp <= 0) vitality = '💀 מודח';
-                else if (p.hp <= 3) vitality = '🚨 קריטי';
-                else if (p.hp <= 6) vitality = '⚠️ בינוני';
-
-                // עיבוד מצב החלטה חזותי
-                let decisionText = '⏳ חושב...';
-                let decisionClass = 'text-stone-500 font-medium';
-
-                if (p.hp <= 0) {
-                    decisionText = '—';
-                    decisionClass = 'text-stone-700';
-                } else if (!p.hasEnvelope && p.decision === 'pending') {
-                    decisionText = '🌴 הישרדות פסיבית (אין מעטפה)';
-                    decisionClass = 'text-stone-400 text-xs';
-                } else if (p.decision === 'passed') {
-                    decisionText = '🛡️ בחר לא לגעת במעטפה';
-                    decisionClass = 'text-teal-500 font-semibold text-xs';
-                } else if (p.decision === 'opened_win') {
-                    decisionText = '📜 פתח וזכה! (+3 HP)';
-                    decisionClass = 'text-emerald-500 font-bold';
-                } else if (p.decision === 'opened_lose') {
-                    decisionText = '📜 פתח והפסיד! (-3 HP)';
-                    decisionClass = 'text-rose-500 font-bold';
-                }
-
-                tr.innerHTML = `
-                    <td class="p-4 font-bold ${p.hp <= 0 ? 'text-stone-600 line-through' : 'text-stone-200'}">${p.name}</td>
-                    <td class="p-4 text-center font-mono font-black text-xl ${p.hp <= 0 ? 'text-red-500' : 'text-emerald-400'}">${p.hp}</td>
-                    <td class="p-4 text-center text-sm">${vitality}</td>
-                    <td class="p-4 text-center text-sm ${decisionClass}">${decisionText}</td>
-                `;
-                tbody.appendChild(tr);
+                    tr.innerHTML = `
+                        <td class="p-4 font-bold ${p.hp <= 0 ? 'text-stone-600 line-through' : 'text-stone-200'}">${p.name}</td>
+                        <td class="p-4 text-center font-mono font-black text-xl ${p.hp <= 0 ? 'text-red-500' : 'text-emerald-400'}">${p.hp}</td>
+                        <td class="p-4 text-center text-sm">${vitality}</td>
+                        <td class="p-4 text-center text-sm ${decisionClass}">${decisionText}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
             });
         }
 
-        // ========================== לוגיקת שחקן (סטודנט) ==========================
+        function nextRound() {
+            db.ref('game').once('value', (snapshot) => {
+                const data = snapshot.val() || { round: 1, players: {} };
+                if (data.round >= 8) return alert('הניסוי הושלם!');
+
+                data.round += 1;
+                for (let pName in data.players) {
+                    let p = data.players[pName];
+                    if (p.hp > 0) {
+                        p.hp -= 1; // יורד חיים אוטומטי במעבר סיבוב
+                        if (p.hp < 0) p.hp = 0;
+                        p.hasEnvelope = Math.random() < 0.3; // 30% סיכוי לשאר הימים
+                        p.decision = 'pending';
+                    }
+                }
+                db.ref('game').set(data);
+            });
+        }
+
+        function resetGame() {
+            if (confirm('האם לאפס את כל המשחק והשחקנים?')) {
+                db.ref('game').set({ round: 1, players: {} });
+            }
+        }
+
+        // ========================== שחקן (סטודנט מהנייד) ==========================
         function joinGame() {
             const input = document.getElementById('player-name-input');
-            myName = input.value.trim();
-            if (!myName) {
-                alert('אנא הזן שם תקין');
-                return;
-            }
+            myName = input.value.trim().replace(/[.#$\[\]]/g, ""); // ניקוי תווים אסורים לפיירבייס
+            if (!myName) return alert('אנא הזן שם תקין');
 
-            playSound('success');
             document.getElementById('player-join').classList.add('hidden');
             document.getElementById('player-game').classList.remove('hidden');
             document.getElementById('player-display-name').innerText = myName;
 
-            const state = getGlobalState();
-            // יצירת פרופיל שחקן חדש בבסיס המשותף - יום 1 תמיד מקבל מעטפה (100% סיכוי)
-            state.players[myName] = {
+            // יום 1: יוצרים שחקן חדש עם 10 חיים ו-100% מעטפה
+            const newPlayer = {
                 name: myName,
                 hp: 10,
                 hasEnvelope: true,
                 decision: 'pending'
             };
-            saveGlobalState(state);
-            
-            myHp = 10;
-            currentRound = state.round;
-            renderPlayerDashboard(state.players[myName], state.round);
+
+            db.ref('game/players/' + myName).set(newPlayer);
+            listenToPlayerSync();
+        }
+
+        function listenToPlayerSync() {
+            db.ref('game').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+                
+                currentRound = data.round;
+                const pData = data.players ? data.players[myName] : null;
+                
+                if (pData) {
+                    myHp = pData.hp;
+                    renderPlayerDashboard(pData, currentRound);
+                }
+            });
         }
 
         function handleEnvelopeDecision(wantsToOpen) {
-            const state = getGlobalState();
-            const p = state.players[myName];
-            if (!p || p.hp <= 0 || p.decision !== 'pending') return;
+            db.ref('game/players/' + myName).once('value', (snapshot) => {
+                const p = snapshot.val();
+                if (!p || p.hp <= 0 || p.decision !== 'pending') return;
 
-            if (wantsToOpen) {
-                // הגרלה פנימית של 50/50
-                const win = Math.random() < 0.5;
-                if (win) {
-                    p.hp += 3;
-                    p.decision = 'opened_win';
-                    playSound('success');
+                if (wantsToOpen) {
+                    const win = Math.random() < 0.5; // הגרלת 50/50 לפתיחה
+                    if (win) {
+                        p.hp += 3;
+                        p.decision = 'opened_win';
+                    } else {
+                        p.hp -= 3;
+                        if (p.hp < 0) p.hp = 0;
+                        p.decision = 'opened_lose';
+                    }
                 } else {
-                    p.hp -= 3;
-                    if (p.hp < 0) p.hp = 0;
-                    p.decision = 'opened_lose';
-                    playSound('fail');
+                    p.decision = 'passed';
                 }
-            } else {
-                p.decision = 'passed';
-                playSound('click');
-            }
-
-            saveGlobalState(state);
-            myHp = p.hp;
-            renderPlayerDashboard(p, state.round);
+                db.ref('game/players/' + myName).set(p);
+            });
         }
 
         function renderPlayerDashboard(pData, roundNum) {
             document.getElementById('play-round').innerText = roundNum;
             document.getElementById('player-hp').innerText = pData.hp;
             
-            // עדכון ויזואלי של בר החיים
-            const bar = document.getElementById('hp-bar');
-            const pct = (pData.hp / 10) * 100;
-            bar.style.width = `${Math.min(pct, 100)}%`;
-            
-            if (pData.hp <= 3) {
-                bar.className = "absolute inset-x-0 bottom-0 h-1 bg-red-500 transition-all duration-500";
-                document.getElementById('hp-status-text').innerText = "אזהרה! רמת האספקה קריטית";
-                document.getElementById('hp-status-text').className = "text-red-400 text-xs font-medium";
-            } else {
-                bar.className = "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500";
-                document.getElementById('hp-status-text').innerText = "מצב האספקה יציב ותקין";
-                document.getElementById('hp-status-text').className = "text-stone-400 text-xs font-medium";
-            }
-
             const envWaiting = document.getElementById('envelope-waiting');
             const envActive = document.getElementById('envelope-active');
             const envResolved = document.getElementById('envelope-resolved');
             const pDead = document.getElementById('player-dead');
             const envContainer = document.getElementById('envelope-container');
 
-            // בדיקת מוות
             if (pData.hp <= 0) {
                 envContainer.classList.add('hidden');
                 pDead.classList.remove('hidden');
@@ -409,56 +302,19 @@
             pDead.classList.add('hidden');
             envContainer.classList.remove('hidden');
 
-            // ניהול תצוגת תיבת המעטפה בהתאם לסטטוס
             if (pData.decision !== 'pending') {
-                envWaiting.classList.add('hidden');
-                envActive.classList.add('hidden');
-                envResolved.classList.remove('hidden');
-                
+                envWaiting.classList.add('hidden'); envActive.classList.add('hidden'); envResolved.classList.remove('hidden');
                 const iconEl = document.getElementById('resolved-icon');
                 const textEl = document.getElementById('resolved-text');
                 
-                if (pData.decision === 'passed') {
-                    iconEl.innerText = '🛡️';
-                    textEl.innerText = 'החלטת לשחק בטוח בסיבוב הזה';
-                    textEl.className = 'text-sm font-bold text-teal-400';
-                } else if (pData.decision === 'opened_win') {
-                    iconEl.innerText = '💎';
-                    textEl.innerText = 'הסתכנת וזכית! (+3 נקודות)';
-                    textEl.className = 'text-sm font-bold text-emerald-400';
-                } else if (pData.decision === 'opened_lose') {
-                    iconEl.innerText = '💥';
-                    textEl.innerText = 'ההסתכנות נכשלה! (-3 נקודות)';
-                    textEl.className = 'text-sm font-bold text-rose-400';
-                }
+                if (pData.decision === 'passed') { iconEl.innerText = '🛡️'; textEl.innerText = 'החלטת לשחק בטוח בסיבוב הזה'; }
+                else if (pData.decision === 'opened_win') { iconEl.innerText = '💎'; textEl.innerText = 'הסתכנת וזכית! (+3 נקודות)'; }
+                else if (pData.decision === 'opened_lose') { iconEl.innerText = '💥'; textEl.innerText = 'ההסתכנות נכשלה! (-3 נקודות)'; }
             } else if (pData.hasEnvelope) {
-                envWaiting.classList.add('hidden');
-                envResolved.classList.add('hidden');
-                envActive.classList.remove('hidden');
+                envWaiting.classList.add('hidden'); envResolved.classList.add('hidden'); envActive.classList.remove('hidden');
             } else {
-                envActive.classList.add('hidden');
-                envResolved.classList.add('hidden');
-                envWaiting.classList.remove('hidden');
+                envActive.classList.add('hidden'); envResolved.classList.add('hidden'); envWaiting.classList.remove('hidden');
             }
-        }
-
-        function startPlayerSyncLoop() {
-            // לולאת סנכרון רציפה לשחקן: בודקת אם המרצה העביר יום
-            setInterval(() => {
-                if (currentRole === 'player' && myName) {
-                    const state = getGlobalState();
-                    const p = state.players[myName];
-                    
-                    if (p) {
-                        // אם הסיבוב הגלובלי השתנה, נעדכן את לוח השחקן
-                        if (state.round !== currentRound) {
-                            currentRound = state.round;
-                            myHp = p.hp;
-                        }
-                        renderPlayerDashboard(p, state.round);
-                    }
-                }
-            }, 800);
         }
     </script>
 </body>
