@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>השורד האחרון - רשת חיה בכיתה</title>
+    <title>השורד האחרון - הניסוי הפסיכולוגי המלא</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
         body {
@@ -10,48 +10,51 @@
             background: radial-gradient(ellipse at top, #2d1a04, #1c1917, #0c0a09);
             color: #f5f5f4; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;
         }
-        .screen { display: none; width: 100%; max-width: 700px; background: rgba(41, 37, 36, 0.95); border: 2px solid #b45309; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); box-sizing: border-box; }
+        .screen { display: none; width: 100%; max-width: 750px; background: rgba(41, 37, 36, 0.95); border: 2px solid #b45309; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); box-sizing: border-box; }
         #role-selection { display: block; }
         
         h1 { color: #f59e0b; margin-top: 0; font-size: 2.5rem; font-weight: 900; }
+        h2 { color: #10b981; margin: 10px 0; }
         p { color: #a8a29e; }
         
         .btn { display: block; width: 100%; padding: 15px; margin: 15px 0; font-size: 1.2rem; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; color: white; text-decoration: none; }
         .btn-lecturer { background: linear-gradient(to right, #d97706, #b45309); }
         .btn-student { background: linear-gradient(to right, #059669, #0f766e); }
-        .btn-action { background: #f59e0b; color: #1c1917; font-size: 1.2rem; }
+        .btn-action { background: #f59e0b; color: #1c1917; font-size: 1.4rem; padding: 18px; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+        .btn-pass { background: #444; color: #aaa; font-size: 1rem; margin-top: 10px; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #1c1917; border-radius: 10px; overflow: hidden; }
         th, td { padding: 12px 15px; text-align: center; border-bottom: 1px solid #444; }
         th { background-color: #451a03; color: #f59e0b; font-weight: bold; }
         tr:hover { background-color: #292524; }
         
-        .status-active { color: #10b981; font-weight: bold; }
-        .status-opened { color: #f59e0b; font-weight: bold; }
-        .status-dead { color: #ef4444; text-decoration: line-through; opacity: 0.6; }
+        .status-waiting { color: #a8a29e; font-style: italic; }
+        .status-opened { color: #f59e0b; font-weight: bold; animation: pulse 1.5s infinite; }
+        .status-passed { color: #6b7280; font-weight: normal; }
+        .status-dead { color: #ef4444; text-decoration: line-through; opacity: 0.5; }
 
-        .input-text { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #57534e; background: #1c1917; color: white; text-align: center; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
-        .hp-display { font-size: 5rem; font-weight: 900; color: #10b981; margin: 10px 0; }
-        .box { background: rgba(28, 25, 23, 0.6); border: 2px dashed #57534e; padding: 20px; border-radius: 12px; margin-top: 20px; }
-        .room-code-box { background: #451a03; padding: 10px; border-radius: 8px; font-size: 1.5rem; font-weight: bold; color: #f59e0b; display: inline-block; margin-bottom: 20px; letter-spacing: 2px; }
+        .input-text { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #57534e; background: #1c1917; color: white; text-align: center; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 15px; }
+        .hp-display { font-size: 6rem; font-weight: 900; color: #10b981; margin: 10px 0; line-height: 1; }
+        .box { background: rgba(28, 25, 23, 0.6); border: 2px dashed #57534e; padding: 25px; border-radius: 12px; margin-top: 20px; min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box; }
+        .room-code-box { background: #451a03; padding: 12px 25px; border-radius: 8px; font-size: 1.8rem; font-weight: bold; color: #f59e0b; display: inline-block; margin-bottom: 20px; letter-spacing: 2px; border: 1px solid #b45309; }
     </style>
 </head>
 <body>
 
     <div id="role-selection" class="screen">
         <h1>השורד האחרון</h1>
-        <p>ניסוי מתח מול מוטיבציה בכיתה</p>
+        <p>ניסוי פסיכולוגי בכיתה: מתח מול מוטיבציה</p>
         <button onclick="initScreen('projector')" class="btn btn-lecturer">🔥 מסך מקרן (מועצת השבט)</button>
         <button onclick="initScreen('player')" class="btn btn-student">🌴 מסך שחקן (השורד באי)</button>
     </div>
 
-    <div id="projector-view" class="screen" style="max-w: 800px;">
-        <h1>🔥 מועצת השבט (לוח משחק) 🔥</h1>
+    <div id="projector-view" class="screen" style="max-w: 850px;">
+        <h1>🔥 מועצת השבט 🔥</h1>
         
-        <p>קוד החדר לסטודנטים:</p>
-        <div id="room-code" class="room-code-box">מתחבר ללוויין...</div>
+        <p>קוד החדר לכניסת הסטודנטים מהנייד:</p>
+        <div id="room-code" class="room-code-box">מתחבר...</div>
 
-        <div style="font-size: 1.4rem; margin-bottom: 20px;">
+        <div style="font-size: 1.6rem; margin-bottom: 25px; font-weight: bold;">
             יום על האי: <strong id="proj-round" style="color:#f59e0b">1</strong> / 8
         </div>
         
@@ -59,8 +62,8 @@
             <thead>
                 <tr>
                     <th>שם השורד</th>
-                    <th>נקודות אספקה (HP)</th>
-                    <th>סטטוס בסיבוב</th>
+                    <th>מד אספקה (HP)</th>
+                    <th>החלטה בסיבוב הנוכחי</th>
                 </tr>
             </thead>
             <tbody id="players-table-body">
@@ -70,41 +73,48 @@
             </tbody>
         </table>
 
-        <button onclick="nextRound()" class="btn btn-lecturer" style="margin-top: 25px;">העבר יום באי (-1 אספקה לכולם)</button>
+        <button onclick="nextRound()" class="btn btn-lecturer" style="margin-top: 30px; font-size: 1.4rem;">העבר יום באי (-1 אספקה לכולם)</button>
     </div>
 
     <div id="player-view" class="screen">
         <div id="player-join">
-            <h2>התחברות לאי</h2>
-            <input type="text" id="room-input" class="input-text" placeholder="הקש קוד חדר (4 ספרות מהמקרן)">
-            <input type="text" id="player-name-input" class="input-text" placeholder="הקלד את שמך">
+            <h2>התחברות לניסוי</h2>
+            <input type="text" id="room-input" class="input-text" placeholder="קוד חדר (4 ספרות מהמקרן)">
+            <input type="text" id="player-name-input" class="input-text" placeholder="הקלד את שמך המלא">
             <button onclick="joinGame()" class="btn btn-student" style="margin-top: 10px;">נחיתה על האי 🌴</button>
         </div>
 
         <div id="player-game" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1917; padding: 10px 15px; border-radius: 8px;">
-                <span id="player-display-name" style="font-weight: bold; color: #f59e0b;">שורד</span>
-                <span>יום <strong id="play-round">1</strong>/8</span>
+                <span id="player-display-name" style="font-weight: bold; color: #f59e0b; font-size: 1.2rem;">שורד</span>
+                <span style="font-size: 1.1rem;">יום <strong id="play-round">1</strong>/8</span>
             </div>
 
-            <div style="margin: 20px 0;">
+            <div style="margin: 25px 0;">
                 <div id="player-hp" class="hp-display">10</div>
-                <p style="margin: 0; font-size: 0.9rem;">מד אספקה שנותר</p>
+                <p style="margin: 5px 0 0 0; font-size: 1rem; color: #a8a29e;">מד אספקה ומים שנותר</p>
             </div>
 
             <div id="envelope-area" class="box">
                 <div id="envelope-waiting">
-                    <p style="font-size: 1.1rem; color: #a8a29e; margin: 0;">האי שקט כרגע...</p>
+                    <p style="font-size: 1.2rem; color: #a8a29e; margin: 0; font-weight: bold;">האי שקט כרגע...</p>
+                    <p style="font-size: 0.9rem; color: #78716c; margin: 8px 0 0 0;">לא קיבלת הזדמנות בסיבוב הזה. המתן למועצת השבט.</p>
                 </div>
+
                 <div id="envelope-active" style="display: none; width: 100%;">
-                    <h3 style="color: #f97316; margin: 0 0 10px 0; font-size: 1.4rem;">הזדמנות??</h3>
-                    <button id="btn-open-envelope" onclick="openEnvelope()" class="btn btn-action">📜 פתח הודעה (+3 / -3)</button>
+                    <h3 style="color: #f97316; margin: 0 0 15px 0; font-size: 1.6rem; font-weight: 900; letter-spacing: 1px;">📜 יש לך הזדמנות!</h3>
+                    <p style="color: #a8a29e; font-size: 0.95rem; margin-bottom: 15px;">האם לקחת את הסיכון? (50% לקבל 3+, 50% להפסיד 3-)</p>
+                    
+                    <button onclick="openEnvelope(true)" class="btn btn-action">פתח הודעה וקח סיכון</button>
+                    <button onclick="openEnvelope(false)" class="btn btn-pass">ותר על ההזדמנות (הישאר בטוח)</button>
                 </div>
-                <p id="envelope-status" style="color: #f59e0b; font-weight: bold; display: none; margin: 0;">הבחירה ננעלה!</p>
+
+                <p id="envelope-status" style="color: #f59e0b; font-weight: bold; display: none; margin: 0; font-size: 1.2rem;"></p>
             </div>
 
-            <div id="player-dead" style="display: none; background: #450a0a; padding: 15px; border-radius: 10px; margin-top: 20px;">
-                <h3 style="color: #ef4444; margin: 0;">💀 האש שלך כבתה והודחת</h3>
+            <div id="player-dead" style="display: none; background: #450a0a; padding: 25px; border-radius: 12px; border: 2px solid #ef4444; margin-top: 20px;">
+                <h3 style="color: #ef4444; margin: 0; font-size: 1.5rem; font-weight: bold;">💀 האש שלך כבתה</h3>
+                <p style="color: #fca5a5; font-size: 1rem; margin-top: 8px; margin-bottom: 0;">האפסקה שלך אזלה והודחת מהאי. אתה משקיף מהצד על הניסוי.</p>
             </div>
         </div>
     </div>
@@ -116,8 +126,8 @@
         let currentRound = 1;
         
         let peer = null;
-        let conn = null; // לשחקן: החיבור למנחה
-        let connections = []; // למנחה: רשימת החיבורים מכל הסטודנטים
+        let conn = null;
+        let connections = [];
         let gameState = { players: {} };
 
         function initScreen(role) {
@@ -126,148 +136,7 @@
             
             if (role === 'projector') {
                 document.getElementById('projector-view').style.display = 'block';
-                // יצירת קוד חדר אקראי בן 4 ספרות
                 const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
                 document.getElementById('room-code').innerText = roomCode;
                 
-                // חיבור שרת התיווך כמנחה
-                peer = new Peer('survivor-' + roomCode);
-                
-                peer.on('connection', function(connection) {
-                    connections.push(connection);
-                    connection.on('data', function(data) {
-                        if (data.type === 'PLAYER_UPDATE') {
-                            gameState.players[data.name] = { hp: data.hp, status: data.status };
-                            updateTable();
-                        }
-                    });
-                });
-            } else {
-                document.getElementById('player-view').style.display = 'block';
-            }
-        }
-
-        // --- לוגיקת מקרן ---
-        function nextRound() {
-            if(currentRound >= 8) return alert("המשחק נגמר!");
-            currentRound++;
-            document.getElementById('proj-round').innerText = currentRound;
-            
-            // שליחת פקודת מעבר יום לכל הסטודנטים שמחוברים אונליין
-            connections.forEach(c => {
-                c.send({ type: 'NEW_DAY', round: currentRound });
-            });
-        }
-
-        function updateTable() {
-            const tbody = document.getElementById('players-table-body');
-            tbody.innerHTML = '';
-            let hasPlayers = false;
-            
-            for (let name in gameState.players) {
-                hasPlayers = true;
-                const p = gameState.players[name];
-                const tr = document.createElement('tr');
-                let statusClass = 'status-active';
-                if (p.hp <= 0) statusClass = 'status-dead';
-                else if (p.status.includes('פתח')) statusClass = 'status-opened';
-
-                tr.innerHTML = `
-                    <td style="font-weight:bold;">${name}</td>
-                    <td style="font-size:1.3rem; font-weight:bold; color:${p.hp <= 0 ? '#ef4444' : '#10b981'}">${p.hp} HP</td>
-                    <td class="${statusClass}">${p.hp <= 0 ? '💀 הודח מהאי' : p.status}</td>
-                `;
-                tbody.appendChild(tr);
-            }
-            if(!hasPlayers) {
-                tbody.innerHTML = `<tr><td colspan="3" style="color:#78716c; font-style:italic;">ממתין לשורדים...</td></tr>`;
-            }
-        }
-
-        // --- לוגיקת שחקן ---
-        function joinGame() {
-            const roomCode = document.getElementById('room-input').value.trim();
-            myName = document.getElementById('player-name-input').value.trim();
-            
-            if(!roomCode || !myName) return alert("הכנס קוד חדר ושם");
-            
-            peer = new Peer();
-            peer.on('open', function() {
-                conn = peer.connect('survivor-' + roomCode);
-                
-                conn.on('open', function() {
-                    document.getElementById('player-join').style.display = 'none';
-                    document.getElementById('player-game').style.display = 'block';
-                    document.getElementById('player-display-name').innerText = myName;
-                    
-                    // בסיבוב הראשון מקבלים מעטפה אוטומטית
-                    document.getElementById('envelope-waiting').style.display = 'none';
-                    document.getElementById('envelope-active').style.display = 'block';
-                    
-                    conn.send({ type: 'PLAYER_UPDATE', name: myName, hp: myHp, status: '✨ מחזיק בהזדמנות...' });
-                });
-
-                conn.on('data', function(data) {
-                    if (data.type === 'NEW_DAY') {
-                        triggerNextDayPlayer(data.round);
-                    }
-                });
-            });
-        }
-
-        function openEnvelope() {
-            const isPositive = Math.random() < 0.5;
-            myHp = isPositive ? myHp + 3 : myHp - 3;
-            if(myHp < 0) myHp = 0;
-            
-            document.getElementById('player-hp').innerText = myHp;
-            document.getElementById('envelope-active').style.display = 'none';
-            document.getElementById('envelope-status').style.display = 'block';
-            
-            let currentStatus = isPositive ? '📜 פתח הזדמנות (+3)' : '📜 פתח הזדמנות (-3)';
-            if(myHp <= 0) {
-                document.getElementById('envelope-area').style.display = 'none';
-                document.getElementById('player-dead').style.display = 'block';
-                currentStatus = '💀 הודח מהאי';
-            }
-            
-            conn.send({ type: 'PLAYER_UPDATE', name: myName, hp: myHp, status: currentStatus });
-            alert(isPositive ? "📜 קיבלת +3 אספקה" : "💀 איבדת -3 אספקה");
-        }
-
-        function triggerNextDayPlayer(newRound) {
-            if(myHp <= 0) return;
-            
-            currentRound = newRound;
-            myHp -= 1;
-            if(myHp < 0) myHp = 0;
-            
-            document.getElementById('player-hp').innerText = myHp;
-            document.getElementById('play-round').innerText = currentRound;
-            
-            if(myHp <= 0) {
-                document.getElementById('envelope-area').style.display = 'none';
-                document.getElementById('player-dead').style.display = 'block';
-                conn.send({ type: 'PLAYER_UPDATE', name: myName, hp: 0, status: '💀 הודח מהאי' });
-                return;
-            }
-
-            // הגרלת 30% לקבל מעטפה ביום החדש
-            const hasEnvelope = Math.random() < 0.3;
-            document.getElementById('envelope-status').style.display = 'none';
-            
-            let currentStatus = '🌴 שורד בשקט';
-            if (hasEnvelope) {
-                document.getElementById('envelope-waiting').style.display = 'none';
-                document.getElementById('envelope-active').style.display = 'block';
-                currentStatus = '✨ מחזיק בהזדמנות...';
-            } else {
-                document.getElementById('envelope-active').style.display = 'none';
-                document.getElementById('envelope-waiting').style.display = 'block';
-            }
-
-            conn.send({ type: 'PLAYER_UPDATE', name: myName, hp: myHp, status: currentStatus });
-        }
-    </script>
-</body>
-</html>
+                peer = new Peer
