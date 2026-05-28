@@ -22,11 +22,17 @@
         <p class="text-stone-400 text-sm mb-8 font-medium">ניסוי מתח מול מוטיבציה בכיתה</p>
         
         <div class="space-y-4">
-            <button onclick="initScreen('projector')" class="w-full bg-gradient-to-r from-amber-600 to-island-accent hover:from-amber-500 hover:to-amber-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg text-lg cursor-pointer">
+            <button onclick="checkLecturerCode()" class="w-full bg-gradient-to-r from-amber-600 to-island-accent hover:from-amber-500 hover:to-amber-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg text-lg cursor-pointer transition transform active:scale-98">
                 🔥 מסך מקרן (מועצת השבט)
             </button>
-            <button onclick="initScreen('player')" class="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg text-lg cursor-pointer">
+            <button onclick="initScreen('player')" class="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg text-lg cursor-pointer transition transform active:scale-98">
                 🌴 מסך שחקן (השורד באי)
+            </button>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-stone-800">
+            <button onclick="globalResetGame()" class="w-full bg-stone-950 hover:bg-red-950/40 text-stone-500 hover:text-red-400 border border-stone-800 hover:border-red-900 text-xs py-3 px-4 rounded-xl cursor-pointer transition font-medium flex items-center justify-center gap-2">
+                🔄 איפוס מוחלט ותחילת משחק חדש (מנקה את הענן)
             </button>
         </div>
     </div>
@@ -61,8 +67,8 @@
             </table>
         </div>
 
-        <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-stone-900/40 p-4 rounded-xl border border-stone-800/60">
-            <button onclick="resetGame()" class="bg-stone-800 hover:bg-stone-700 text-stone-400 text-xs px-4 py-2 rounded-lg cursor-pointer">אתחל ניסוי מחדש 🔄</button>
+        <div class="mt-6 flex justify-between items-center bg-stone-900/40 p-4 rounded-xl border border-stone-800/60">
+            <button onclick="backToMain()" class="text-stone-500 hover:text-stone-300 text-xs font-medium cursor-pointer">⬅️ חזרה למסך הראשי</button>
             <button onclick="nextRound()" class="bg-amber-600 hover:bg-amber-500 text-stone-950 font-black px-6 py-3 rounded-xl shadow-lg transition duration-150 transform active:scale-95 cursor-pointer text-sm">
                 העבר יום באי (-1 אספקה לכולם) 🗓️
             </button>
@@ -77,9 +83,10 @@
             </div>
             <div class="space-y-4">
                 <input type="text" id="player-name-input" class="w-full bg-stone-950 border border-stone-700 rounded-xl px-4 py-3 text-center text-lg font-bold text-white focus:outline-none focus:border-emerald-500 shadow-inner" placeholder="הקלד את שמך כאן...">
-                <button onclick="joinGame()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg cursor-pointer">
-                    עלה על הסירה ⛵
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="backToMain()" class="w-1/3 bg-stone-950 hover:bg-stone-900 text-stone-400 font-bold py-3.5 px-4 rounded-xl border border-stone-800 text-sm cursor-pointer">ביטול</button>
+                    <button onclick="joinGame()" class="w-2/3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg cursor-pointer">עלה על הסירה ⛵</button>
+                </div>
             </div>
         </div>
 
@@ -99,7 +106,7 @@
                 <div id="envelope-waiting" class="space-y-2">
                     <div class="text-3xl opacity-30">🌊</div>
                     <p class="text-stone-500 text-sm font-medium">האי שקט כרגע...</p>
-                    <p class="text-stone-600 class='text-xs'">לא מצאת דבר בחוף הים בסיבוב הזה. המתן לעדכון מהמרצה במקרן.</p>
+                    <p class="text-stone-600 text-xs px-4">לא מצאת דבר בחוף הים בסיבוב הזה. המתן לעדכון מהמרצה במקרן.</p>
                 </div>
 
                 <div id="envelope-active" class="hidden space-y-4 w-full">
@@ -134,7 +141,6 @@
     </div>
 
     <script>
-        // חיבור קשיח לענן פיירבייס ייעודי לניסוי
         const firebaseConfig = {
             databaseURL: "https://survivor-class-default-rtdb.europe-west1.firebasedatabase.app/"
         };
@@ -145,6 +151,22 @@
         let myName = '';
         let myHp = 10;
         let currentRound = 1;
+        let firebaseListener = null;
+
+        // אימות קוד מנהל
+        function checkLecturerCode() {
+            const code = prompt("אנא הזן קוד מנחה כדי להפעיל את המקרן:");
+            if (code === "12345") {
+                // הדלקת הסימון שהמשחק פעיל ופתוח להרשמה
+                db.ref('game/status').set('active', (error) => {
+                    if (!error) {
+                        initScreen('projector');
+                    }
+                });
+            } else if (code !== null) {
+                alert("קוד שגוי! הגישה למסך המקרן חסומה.");
+            }
+        }
 
         function initScreen(role) {
             currentRole = role;
@@ -158,11 +180,35 @@
             }
         }
 
+        function backToMain() {
+            if (firebaseListener) {
+                db.ref('game').off('value', firebaseListener);
+            }
+            document.getElementById('projector-view').classList.add('hidden');
+            document.getElementById('player-view').classList.add('hidden');
+            document.getElementById('player-game').classList.add('hidden');
+            document.getElementById('player-join').classList.remove('hidden');
+            document.getElementById('role-selection').classList.remove('hidden');
+            currentRole = '';
+            myName = '';
+        }
+
+        function globalResetGame() {
+            if (confirm('האם אתה בטוח שברצונך לאפס לחלוטין את הניסוי בענן? פעולה זו תסגור את ההרשמה, תמחוק את כל השחקנים ותחזיר את המשחק ליום 1.')) {
+                // איפוס מלא כולל הפיכת הסטטוס ל-inactive (הרשמה חסומה)
+                db.ref('game').set({ round: 1, status: 'inactive', players: {} }, (error) => {
+                    if (!error) {
+                        alert('בסיס הנתונים בענן אופס בהצלחה! המשחק ננעל מחדש.');
+                    }
+                });
+            }
+        }
+
         // ========================== מקרן (מרצה) ==========================
         function listenToProjectorSync() {
-            db.ref('game').on('value', (snapshot) => {
+            firebaseListener = db.ref('game').on('value', (snapshot) => {
                 const data = snapshot.val() || { round: 1, players: {} };
-                currentRound = data.round;
+                currentRound = data.round || 1;
                 document.getElementById('proj-round').innerText = currentRound;
                 
                 const tbody = document.getElementById('players-table-body');
@@ -208,9 +254,9 @@
                 for (let pName in data.players) {
                     let p = data.players[pName];
                     if (p.hp > 0) {
-                        p.hp -= 1; // יורד חיים אוטומטי במעבר סיבוב
+                        p.hp -= 1;
                         if (p.hp < 0) p.hp = 0;
-                        p.hasEnvelope = Math.random() < 0.3; // 30% סיכוי לשאר הימים
+                        p.hasEnvelope = Math.random() < 0.3;
                         p.decision = 'pending';
                     }
                 }
@@ -218,104 +264,7 @@
             });
         }
 
-        function resetGame() {
-            if (confirm('האם לאפס את כל המשחק והשחקנים?')) {
-                db.ref('game').set({ round: 1, players: {} });
-            }
-        }
-
         // ========================== שחקן (סטודנט מהנייד) ==========================
         function joinGame() {
             const input = document.getElementById('player-name-input');
-            myName = input.value.trim().replace(/[.#$\[\]]/g, ""); // ניקוי תווים אסורים לפיירבייס
-            if (!myName) return alert('אנא הזן שם תקין');
-
-            document.getElementById('player-join').classList.add('hidden');
-            document.getElementById('player-game').classList.remove('hidden');
-            document.getElementById('player-display-name').innerText = myName;
-
-            // יום 1: יוצרים שחקן חדש עם 10 חיים ו-100% מעטפה
-            const newPlayer = {
-                name: myName,
-                hp: 10,
-                hasEnvelope: true,
-                decision: 'pending'
-            };
-
-            db.ref('game/players/' + myName).set(newPlayer);
-            listenToPlayerSync();
-        }
-
-        function listenToPlayerSync() {
-            db.ref('game').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (!data) return;
-                
-                currentRound = data.round;
-                const pData = data.players ? data.players[myName] : null;
-                
-                if (pData) {
-                    myHp = pData.hp;
-                    renderPlayerDashboard(pData, currentRound);
-                }
-            });
-        }
-
-        function handleEnvelopeDecision(wantsToOpen) {
-            db.ref('game/players/' + myName).once('value', (snapshot) => {
-                const p = snapshot.val();
-                if (!p || p.hp <= 0 || p.decision !== 'pending') return;
-
-                if (wantsToOpen) {
-                    const win = Math.random() < 0.5; // הגרלת 50/50 לפתיחה
-                    if (win) {
-                        p.hp += 3;
-                        p.decision = 'opened_win';
-                    } else {
-                        p.hp -= 3;
-                        if (p.hp < 0) p.hp = 0;
-                        p.decision = 'opened_lose';
-                    }
-                } else {
-                    p.decision = 'passed';
-                }
-                db.ref('game/players/' + myName).set(p);
-            });
-        }
-
-        function renderPlayerDashboard(pData, roundNum) {
-            document.getElementById('play-round').innerText = roundNum;
-            document.getElementById('player-hp').innerText = pData.hp;
-            
-            const envWaiting = document.getElementById('envelope-waiting');
-            const envActive = document.getElementById('envelope-active');
-            const envResolved = document.getElementById('envelope-resolved');
-            const pDead = document.getElementById('player-dead');
-            const envContainer = document.getElementById('envelope-container');
-
-            if (pData.hp <= 0) {
-                envContainer.classList.add('hidden');
-                pDead.classList.remove('hidden');
-                return;
-            }
-
-            pDead.classList.add('hidden');
-            envContainer.classList.remove('hidden');
-
-            if (pData.decision !== 'pending') {
-                envWaiting.classList.add('hidden'); envActive.classList.add('hidden'); envResolved.classList.remove('hidden');
-                const iconEl = document.getElementById('resolved-icon');
-                const textEl = document.getElementById('resolved-text');
-                
-                if (pData.decision === 'passed') { iconEl.innerText = '🛡️'; textEl.innerText = 'החלטת לשחק בטוח בסיבוב הזה'; }
-                else if (pData.decision === 'opened_win') { iconEl.innerText = '💎'; textEl.innerText = 'הסתכנת וזכית! (+3 נקודות)'; }
-                else if (pData.decision === 'opened_lose') { iconEl.innerText = '💥'; textEl.innerText = 'ההסתכנות נכשלה! (-3 נקודות)'; }
-            } else if (pData.hasEnvelope) {
-                envWaiting.classList.add('hidden'); envResolved.classList.add('hidden'); envActive.classList.remove('hidden');
-            } else {
-                envActive.classList.add('hidden'); envResolved.classList.add('hidden'); envWaiting.classList.remove('hidden');
-            }
-        }
-    </script>
-</body>
-</html>
+            const enteredName = input.value.trim().replace(/
