@@ -139,4 +139,164 @@
                 const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
                 document.getElementById('room-code').innerText = roomCode;
                 
-                peer = new Peer
+                peer = new Peer('survivor-' + roomCode);
+                
+                peer.on('connection', function(connection) {
+                    connections.push(connection);
+                    connection.on('data', function(data) {
+                        if (data.type === 'PLAYER_UPDATE') {
+                            gameState.players[data.name] = { hp: data.hp, status: data.status };
+                            updateTable();
+                        }
+                    });
+                });
+            } else {
+                document.getElementById('player-view').style.display = 'block';
+            }
+        }
+
+        // --- לוגיקת מקרן (מרצה) ---
+        function nextRound() {
+            if(currentRound >= 8) return alert("הניסוי הסתיים (8 ימים)!");
+            currentRound++;
+            document.getElementById('proj-round').innerText = currentRound;
+            
+            // איפוס סטטוסים בטבלה לקראת הסיבוב החדש
+            for (let name in gameState.players) {
+                if (gameState.players[name].hp > 0) {
+                    gameState.players[name].status = '⏳ חושב...';
+                }
+            }
+            updateTable();
+
+            // פקודה לכל הניידים לעבור יום (-1 חיים וחישוב 30% מעטפה)
+            connections.forEach(c => {
+                c.send({ type: 'NEW_DAY', round: currentRound });
+            });
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('players-table-body');
+            tbody.innerHTML = '';
+            let hasPlayers = false;
+            
+            for (let name in gameState.players) {
+                hasPlayers = true;
+                const p = gameState.players[name];
+                const tr = document.createElement('tr');
+                
+                let statusClass = 'status-waiting';
+                if (p.hp <= 0) statusClass = 'status-dead';
+                else if (p.status.includes('פתח')) statusClass = 'status-opened';
+                else if (p.status.includes('ותר')) statusClass = 'status-passed';
+
+                tr.innerHTML = `
+                    <td style="font-weight:bold; ${p.hp <= 0 ? 'text-decoration: line-through; opacity:0.5;' : ''}">${name}</td>
+                    <td style="font-size:1.4rem; font-weight:bold; color:${p.hp <= 0 ? '#ef4444' : '#10b981'}">${p.hp} HP</td>
+                    <td class="${statusClass}">${p.hp <= 0 ? '💀 כבתה האש (מודח)' : p.status}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+            if(!hasPlayers) {
+                tbody.innerHTML = `<tr><td colspan="3" style="color:#78716c; font-style:italic;">ממתין לשורדים שיזינו את הקוד...</td></tr>`;
+            }
+        }
+
+        // --- לוגיקת שחקן (סטודנט) ---
+        function joinGame() {
+            const roomCode = document.getElementById('room-input').value.trim();
+            myName = document.getElementById('player-name-input').value.trim();
+            
+            if(!roomCode || !myName) return alert("נא להזין קוד חדר ושם מלא");
+            
+            peer = new Peer();
+            peer.on('open', function() {
+                conn = peer.connect('survivor-' + roomCode);
+                
+                conn.on('open', function() {
+                    document.getElementById('player-join').style.display = 'none';
+                    document.getElementById('player-game').style.display = 'block';
+                    document.getElementById('player-display-name').innerText = myName;
+                    
+                    // יום 1: 100% סיכוי למעטפה לכולם על פי הדרישה
+                    document.getElementById('envelope-waiting').style.display = 'none';
+                    document.getElementById('envelope-active').style.display = 'block';
+                    
+                    conn.send({ type: 'PLAYER_UPDATE', name: myName, hp: myHp, status: '⏳ חושב...' });
+                });
+
+                conn.on('data', function(data) {
+                    if (data.type === 'NEW_DAY') {
+                        triggerNextDayPlayer(data.round);
+                    }
+                });
+            });
+        }
+
+        function openEnvelope(didOpen) {
+            let currentStatus = '';
+            
+            if (didOpen) {
+                // הגרלה קשיחה של 50/50 לפתיחה: 3+ או 3-
+                const isPositive = Math.random() < 0.5;
+                myHp = isPositive ? myHp + 3 : myHp - 3;
+                if(myHp < 0) myHp = 0;
+                
+                currentStatus = isPositive ? '📜 פתח/ה את המעטפה! (+3)' : '📜 פתח/ה את המעטפה! (-3)';
+                document.getElementById('envelope-status').innerText = isPositive ? 'פתחת את המעטפה וזכית ב-3+ אספקה!' : 'פתחת את המעטפה והפסדת 3- אספקה!';
+                document.getElementById('envelope-status').style.color = isPositive ? '#10b981' : '#ef4444';
+            } else {
+                // הסטודנט בחר לוותר ולא לקחת סיכון
+                currentStatus = '🛡️ ויתר/ה על הסיכון';
+                document.getElementById('envelope-status').innerText = 'בחרת שלא לקחת סיכון הסיבוב.';
+                document.getElementById('envelope-status').style.color = '#a8a29e';
+            }
+            
+            document.getElementById('player-hp').innerText = myHp;
+            document.getElementById('envelope-active').style.display = 'none';
+            document.getElementById('envelope-status').style.display = 'block';
+            
+            if(myHp <= 0) {
+                document.getElementById('envelope-area').style.display = 'none';
+                document.getElementById('player-dead').style.display = 'block';
+                currentStatus = '💀 כבתה האש (מודח)';
+            }
+            
+            // שידור ההחלטה וה-HP המעודכן למקרן המרצה
+            conn.send({ type: 'PLAYER_UPDATE', name: myName, hp: myHp, status: currentStatus });
+        }
+
+        function triggerNextDayPlayer(newRound) {
+            if(myHp <= 0) return; // שחקן מת לא עושה כלום
+            
+            currentRound = newRound;
+            myHp -= 1; // ירידה אוטומטית של יום
+            if(myHp < 0) myHp = 0;
+            
+            document.getElementById('player-hp').innerText = myHp;
+            document.getElementById('play-round').innerText = currentRound;
+            
+            if(myHp <= 0) {
+                document.getElementById('envelope-area').style.display = 'none';
+                document.getElementById('player-dead').style.display = 'block';
+                conn.send({ type: 'PLAYER_UPDATE', name: myName, hp: 0, status: '💀 כבתה האש (מודח)' });
+                return;
+            }
+
+            // חוק ה-30%: הגרלה האם בכלל תופיע מעטפה ביום החדש
+            const hasEnvelope = Math.random() < 0.3;
+            document.getElementById('envelope-status').style.display = 'none';
+            
+            if (hasEnvelope) {
+                document.getElementById('envelope-waiting').style.display = 'none';
+                document.getElementById('envelope-active').style.display = 'block';
+            } else {
+                document.getElementById('envelope-active').style.display = 'none';
+                document.getElementById('envelope-waiting').style.display = 'block';
+                // אם אין מעטפה, הוא אוטומטית במצב פסיבי ("שורד בשקט")
+                conn.send({ type: 'PLAYER_UPDATE', name: myName, hp: myHp, status: '🌴 שורד בשקט' });
+            }
+        }
+    </script>
+</body>
+</html>
